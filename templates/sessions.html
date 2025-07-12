@@ -1,0 +1,1211 @@
+{% extends "base.html" %}
+
+{% block title %}Sessions - NeuroLearn{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Interactive elements for kinesthetic learners */
+    .kinesthetic-button {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .kinesthetic-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .kinesthetic-button:active {
+        transform: scale(0.95);
+    }
+    
+    /* Audio button styling */
+    .audio-button {
+        transition: all 0.2s ease;
+    }
+    
+    .audio-button:hover {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    /* Feedback animations */
+    .feedback-animation {
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Movement simulation visual */
+    .movement-simulation {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .movement-simulation::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(40, 167, 69, 0.2), transparent);
+        animation: moveRight 2s ease-in-out;
+    }
+    
+    @keyframes moveRight {
+        0% { left: -100%; }
+        50% { left: 0; }
+        100% { left: 100%; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Page Header -->
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">Learning Sessions</h1>
+                <p class="text-muted mb-0">Start new sessions and track progress</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newSessionModal">
+                    <i class="fas fa-plus me-2"></i>New Session
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Session -->
+    <div class="col-12 mb-4" id="activeSessionSection" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-play me-2"></i>Active Session
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Current Student</h6>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="student-avatar me-3" id="activeStudentAvatar">
+                                <!-- Student avatar will be set here -->
+                            </div>
+                            <div>
+                                <h5 id="activeStudentName">Student Name</h5>
+                                <p class="mb-0 text-muted" id="activeStudentInfo">Grade • Learning Style</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Session Progress</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Question <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span></span>
+                            <span id="sessionTimer">00:00</span>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar" id="sessionProgress" style="width: 0%"></div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success" onclick="submitAnswer()">
+                                <i class="fas fa-check me-2"></i>Submit Answer
+                            </button>
+                            <button class="btn btn-warning" onclick="endSession()">
+                                <i class="fas fa-stop me-2"></i>End Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Controls -->
+    <div class="col-12 mb-4" id="sessionControls">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Session Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Select Student</label>
+                        <select class="form-select" id="studentSelect">
+                            <option value="">Choose a student...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Subject</label>
+                        <select class="form-select" id="subjectSelect">
+                            <option value="math">Mathematics</option>
+                            <option value="science">Science</option>
+                            <option value="english">English</option>
+                            <option value="history">History</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Question Count</label>
+                        <select class="form-select" id="questionCountSelect">
+                            <option value="5">5 Questions</option>
+                            <option value="10" selected>10 Questions</option>
+                            <option value="15">15 Questions</option>
+                            <option value="20">20 Questions</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Difficulty Level</label>
+                        <select class="form-select" id="difficultySelect">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Session Type</label>
+                        <select class="form-select" id="sessionTypeSelect">
+                            <option value="adaptive" selected>Adaptive Learning</option>
+                            <option value="practice">Practice Mode</option>
+                            <option value="assessment">Assessment</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-primary btn-lg" onclick="startSession()">
+                        <i class="fas fa-play me-2"></i>Start Learning Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Interface -->
+    <div class="col-12 mb-4" id="questionInterface" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>Question <span id="questionNumber">1</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6 class="mb-3" id="questionText">Question text will appear here...</h6>
+                    <div id="questionOptions">
+                        <!-- Options will be loaded here -->
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-outline-secondary" onclick="previousQuestion()" id="prevBtn" disabled>
+                        <i class="fas fa-arrow-left me-2"></i>Previous
+                    </button>
+                    <div>
+                        <span class="badge badge-info me-2" id="timeSpent">Time: 00:00</span>
+                        <span class="badge badge-success" id="accuracy">Accuracy: 0%</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="nextQuestion()" id="nextBtn">
+                        Next<i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Sessions -->
+    <div class="col-xl-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Sessions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Subject</th>
+                                <th>Accuracy</th>
+                                <th>Duration</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentSessionsTable">
+                            <!-- Recent sessions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Statistics -->
+    <div class="col-xl-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Session Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-primary" id="totalSessionsCount">0</div>
+                            <div class="stats-label">Total Sessions</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-success" id="avgAccuracy">0%</div>
+                            <div class="stats-label">Avg Accuracy</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-info" id="avgDuration">0 min</div>
+                            <div class="stats-label">Avg Duration</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-warning" id="activeStudents">0</div>
+                            <div class="stats-label">Active Students</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>Performance by Subject</h6>
+                    <div class="chart-container" style="height: 200px;">
+                        <canvas id="subjectPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Session Modal -->
+<div class="modal fade" id="newSessionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Create New Session
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newSessionForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Student</label>
+                            <select class="form-select" name="studentId" required>
+                                <option value="">Select Student</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subject</label>
+                            <select class="form-select" name="subject" required>
+                                <option value="math">Mathematics</option>
+                                <option value="science">Science</option>
+                                <option value="english">English</option>
+                                <option value="history">History</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Session Type</label>
+                            <select class="form-select" name="sessionType" required>
+                                <option value="adaptive">Adaptive Learning</option>
+                                <option value="practice">Practice Mode</option>
+                                <option value="assessment">Assessment</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Question Count</label>
+                            <select class="form-select" name="questionCount" required>
+                                <option value="5">5 Questions</option>
+                                <option value="10" selected>10 Questions</option>
+                                <option value="15">15 Questions</option>
+                                <option value="20">20 Questions</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Difficulty</label>
+                            <select class="form-select" name="difficulty" required>
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Time Limit (minutes)</label>
+                            <input type="number" class="form-control" name="timeLimit" value="30" min="5" max="120">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Session Notes</label>
+                        <textarea class="form-control" name="notes" rows="3" placeholder="Any notes about this session..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createSession()">
+                    <i class="fas fa-play me-2"></i>Start Session
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Results Modal -->
+<div class="modal fade" id="sessionResultsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-trophy me-2"></i>Session Results
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="sessionResultsContent">
+                    <!-- Session results will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="viewDetailedResults()">
+                    <i class="fas fa-chart-line me-2"></i>View Detailed Analysis
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentSession = null;
+let currentQuestionIndex = 0;
+let sessionTimer = null;
+let sessionStartTime = null;
+let sessionData = {
+    answers: [],
+    timeSpent: [],
+    correctAnswers: 0
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadStudents();
+    loadRecentSessions();
+    loadSessionStats();
+    initializeSubjectChart();
+});
+
+function loadStudents() {
+    fetch('/api/students')
+        .then(response => response.json())
+        .then(data => {
+            const studentSelect = document.getElementById('studentSelect');
+            const modalStudentSelect = document.querySelector('#newSessionForm select[name="studentId"]');
+            
+            let options = '<option value="">Choose a student...</option>';
+            data.students.forEach(student => {
+                options += `<option value="${student.id}">${student.name} (Grade ${student.grade})</option>`;
+            });
+            
+            studentSelect.innerHTML = options;
+            modalStudentSelect.innerHTML = options;
+        })
+        .catch(error => {
+            console.error('Error loading students:', error);
+        });
+}
+
+function startSession() {
+    const studentId = document.getElementById('studentSelect').value;
+    const subject = document.getElementById('subjectSelect').value;
+    const questionCount = parseInt(document.getElementById('questionCountSelect').value);
+    const difficulty = document.getElementById('difficultySelect').value;
+    const sessionType = document.getElementById('sessionTypeSelect').value;
+    
+    if (!studentId) {
+        showError('Please select a student');
+        return;
+    }
+    
+    // Get student info and start session
+    fetch(`/api/student/${studentId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const student = data.student;
+            
+            // Start session with backend
+            return fetch('/api/start_session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    student_id: studentId,
+                    subject: subject,
+                    difficulty: difficulty,
+                    question_count: questionCount
+                })
+            });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(sessionData => {
+            // Get student info for UI
+            return fetch(`/api/student/${studentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const student = data.student;
+                    
+                    // Initialize session with backend questions
+                    currentSession = {
+                        student_id: studentId,
+                        student: student,
+                        subject: subject,
+                        question_count: questionCount,
+                        difficulty: difficulty,
+                        session_type: sessionType,
+                        start_time: new Date(),
+                        questions: sessionData.questions || [],
+                        current_question: 0
+                    };
+                    
+                    // Load questions from backend or fallback to local
+                    if (currentSession.questions.length === 0) {
+                        loadQuestions();
+                    } else {
+                        displayQuestion(0);
+                    }
+                    
+                    // Update UI
+                    document.getElementById('sessionControls').style.display = 'none';
+                    document.getElementById('activeSessionSection').style.display = 'block';
+                    document.getElementById('questionInterface').style.display = 'block';
+                    
+                    // Update active student info
+                    document.getElementById('activeStudentAvatar').innerHTML = student.name.charAt(0);
+                    document.getElementById('activeStudentName').textContent = student.name;
+                    document.getElementById('activeStudentInfo').textContent = `Grade ${student.grade} • ${student.learning_preferences ? student.learning_preferences[0] : 'Unknown'} learner`;
+                    
+                    // Start timer
+                    startSessionTimer();
+                    
+                    showSuccess('Session started successfully');
+                });
+        })
+        .catch(error => {
+            console.error('Error starting session:', error);
+            showError('Failed to start session: ' + error.message);
+        });
+}
+
+function loadQuestions() {
+    // Simulate loading questions
+    const questions = generateQuestions(currentSession.subject, currentSession.question_count, currentSession.difficulty);
+    currentSession.questions = questions;
+    
+    displayQuestion(0);
+}
+
+function generateQuestions(subject, count, difficulty) {
+    const questions = [];
+    const subjects = {
+        math: [
+            { question: "What is 15 + 27?", options: ["40", "42", "43", "41"], correct: 1 },
+            { question: "Solve: 8 × 6 = ?", options: ["48", "46", "50", "44"], correct: 0 },
+            { question: "What is 3/4 of 20?", options: ["15", "12", "18", "16"], correct: 0 },
+            { question: "Find the perimeter of a rectangle with length 8 and width 5", options: ["26", "13", "40", "20"], correct: 0 },
+            { question: "What is 25% of 80?", options: ["20", "25", "30", "15"], correct: 0 }
+        ],
+        science: [
+            { question: "What is the chemical symbol for water?", options: ["H2O", "CO2", "O2", "N2"], correct: 0 },
+            { question: "Which planet is closest to the Sun?", options: ["Venus", "Mercury", "Earth", "Mars"], correct: 1 },
+            { question: "What is the largest organ in the human body?", options: ["Heart", "Brain", "Skin", "Liver"], correct: 2 },
+            { question: "What is the process by which plants make food?", options: ["Photosynthesis", "Respiration", "Digestion", "Fermentation"], correct: 0 },
+            { question: "What is the atomic number of carbon?", options: ["6", "12", "14", "8"], correct: 0 }
+        ],
+        english: [
+            { question: "Which word is a synonym for 'happy'?", options: ["Sad", "Joyful", "Angry", "Tired"], correct: 1 },
+            { question: "What is the past tense of 'run'?", options: ["Running", "Ran", "Runs", "Runned"], correct: 1 },
+            { question: "Which sentence is grammatically correct?", options: ["Me and him went to the store", "Him and I went to the store", "He and I went to the store", "I and he went to the store"], correct: 2 },
+            { question: "What is a noun?", options: ["A person, place, or thing", "An action word", "A describing word", "A connecting word"], correct: 0 },
+            { question: "Which word is an antonym of 'big'?", options: ["Large", "Huge", "Small", "Giant"], correct: 2 }
+        ]
+    };
+    
+    const subjectQuestions = subjects[subject] || subjects.math;
+    
+    for (let i = 0; i < count; i++) {
+        const questionIndex = i % subjectQuestions.length;
+        questions.push({...subjectQuestions[questionIndex]});
+    }
+    
+    return questions;
+}
+
+function displayQuestion(index) {
+    if (!currentSession || !currentSession.questions) {
+        showError('No active session found');
+        return;
+    }
+    
+    if (index < 0 || index >= currentSession.questions.length) return;
+    
+    currentQuestionIndex = index;
+    const question = currentSession.questions[index];
+    
+    document.getElementById('questionNumber').textContent = index + 1;
+    document.getElementById('questionText').textContent = question.question;
+    document.getElementById('totalQuestions').textContent = currentSession.questions.length;
+    document.getElementById('currentQuestion').textContent = index + 1;
+    
+    // Update progress
+    const progress = ((index + 1) / currentSession.questions.length) * 100;
+    document.getElementById('sessionProgress').style.width = progress + '%';
+    
+    // Update navigation buttons
+    document.getElementById('prevBtn').disabled = index === 0;
+    document.getElementById('nextBtn').textContent = index === currentSession.questions.length - 1 ? 'Finish' : 'Next';
+    
+    // Display options
+    const optionsContainer = document.getElementById('questionOptions');
+    let optionsHtml = '';
+    question.options.forEach((option, optionIndex) => {
+        optionsHtml += `
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="answer" id="option${optionIndex}" value="${optionIndex}">
+                <label class="form-check-label" for="option${optionIndex}">
+                    ${option}
+                </label>
+            </div>
+        `;
+    });
+    optionsContainer.innerHTML = optionsHtml;
+    
+    // Add audio for options if auditory learner
+    const studentLearningStyle = currentSession.student.learning_preferences ? currentSession.student.learning_preferences[0] : 'visual';
+    if (studentLearningStyle === 'auditory') {
+        addAudioToOptions(question.options);
+    }
+    
+    // Add learning style specific features
+    if (studentLearningStyle === 'auditory') {
+        addAuditoryFeatures(question);
+    } else if (studentLearningStyle === 'kinesthetic') {
+        addKinestheticFeatures(question);
+    }
+}
+
+function addAuditoryFeatures(question) {
+    // Add audio button for auditory learners
+    const questionText = document.getElementById('questionText');
+    const audioButton = document.createElement('button');
+    audioButton.className = 'btn btn-outline-primary btn-sm ms-2 audio-button';
+    audioButton.innerHTML = '<i class="fas fa-volume-up"></i> Listen';
+    audioButton.onclick = () => speakText(question.question);
+    
+    // Insert audio button after question text
+    questionText.appendChild(audioButton);
+    
+    // Auto-play the question after a short delay
+    setTimeout(() => {
+        speakText(question.question);
+    }, 500);
+    
+    // Only show auditory indicator once per session (on first question)
+    if (currentQuestionIndex === 0) {
+        const auditoryIndicator = document.createElement('div');
+        auditoryIndicator.className = 'alert alert-info mt-2';
+        auditoryIndicator.id = 'auditoryModeIndicator';
+        auditoryIndicator.innerHTML = '<i class="fas fa-headphones"></i> <strong>Auditory Learning Mode:</strong> Questions will be read aloud to help you learn through listening.';
+        questionText.parentElement.appendChild(auditoryIndicator);
+    }
+}
+
+function addKinestheticFeatures(question) {
+    // Add interactive elements for kinesthetic learners
+    const questionContainer = document.getElementById('questionText').parentElement;
+    
+    // Add interactive buttons
+    const interactiveDiv = document.createElement('div');
+    interactiveDiv.className = 'mt-3 mb-3';
+    interactiveDiv.innerHTML = `
+        <div class="alert alert-warning">
+            <i class="fas fa-hands-helping"></i> <strong>Kinesthetic Learning Mode:</strong> Use the interactive buttons below to simulate physical actions related to this question.
+        </div>
+        <div class="d-flex gap-2 mb-2">
+            <button class="btn btn-outline-success btn-sm kinesthetic-button" onclick="simulateMovement()">
+                <i class="fas fa-walking"></i> Simulate Movement
+            </button>
+            <button class="btn btn-outline-warning btn-sm kinesthetic-button" onclick="simulateTouch()">
+                <i class="fas fa-hand-paper"></i> Simulate Touch
+            </button>
+            <button class="btn btn-outline-info btn-sm kinesthetic-button" onclick="simulateBuilding()">
+                <i class="fas fa-cubes"></i> Simulate Building
+            </button>
+        </div>
+        <div id="kinestheticFeedback" class="alert alert-info feedback-animation" style="display: none;">
+            <i class="fas fa-info-circle"></i> <span id="feedbackText"></span>
+        </div>
+    `;
+    
+    questionContainer.appendChild(interactiveDiv);
+}
+
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        // Stop any ongoing speech
+        speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        // Try to use a female voice if available
+        const voices = speechSynthesis.getVoices();
+        const femaleVoice = voices.find(voice => voice.name.includes('Female') || voice.name.includes('Samantha'));
+        if (femaleVoice) {
+            utterance.voice = femaleVoice;
+        }
+        
+        speechSynthesis.speak(utterance);
+    } else {
+        showError('Text-to-speech is not supported in this browser');
+    }
+}
+
+function simulateMovement() {
+    const feedback = document.getElementById('kinestheticFeedback');
+    const feedbackText = document.getElementById('feedbackText');
+    
+    feedbackText.textContent = 'Movement simulation: You moved 3 steps forward and 1 step back. You are now 2 steps from your starting position.';
+    feedback.style.display = 'block';
+    
+    // Add visual feedback
+    feedback.className = 'alert alert-success';
+    feedback.innerHTML = '<i class="fas fa-walking"></i> ' + feedbackText.textContent;
+    
+    setTimeout(() => {
+        feedback.style.display = 'none';
+    }, 3000);
+}
+
+function simulateTouch() {
+    const feedback = document.getElementById('kinestheticFeedback');
+    const feedbackText = document.getElementById('feedbackText');
+    
+    feedbackText.textContent = 'Touch simulation: You touched a soft object. Your sense of touch is activated.';
+    feedback.style.display = 'block';
+    
+    // Add visual feedback
+    feedback.className = 'alert alert-warning';
+    feedback.innerHTML = '<i class="fas fa-hand-paper"></i> ' + feedbackText.textContent;
+    
+    setTimeout(() => {
+        feedback.style.display = 'none';
+    }, 3000);
+}
+
+function simulateBuilding() {
+    const feedback = document.getElementById('kinestheticFeedback');
+    const feedbackText = document.getElementById('feedbackText');
+    
+    feedbackText.textContent = 'Building simulation: You built a tower with 4 blocks, then added 2 more. Total: 6 blocks.';
+    feedback.style.display = 'block';
+    
+    // Add visual feedback
+    feedback.className = 'alert alert-info';
+    feedback.innerHTML = '<i class="fas fa-cubes"></i> ' + feedbackText.textContent;
+    
+    setTimeout(() => {
+        feedback.style.display = 'none';
+    }, 3000);
+}
+
+function addAudioToOptions(options) {
+    // Add audio buttons to each option
+    const optionLabels = document.querySelectorAll('.form-check-label');
+    optionLabels.forEach((label, index) => {
+        const audioButton = document.createElement('button');
+        audioButton.className = 'btn btn-outline-secondary btn-sm ms-2 audio-button';
+        audioButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+        audioButton.onclick = () => speakText(options[index]);
+        label.appendChild(audioButton);
+    });
+}
+
+function nextQuestion() {
+    // Check if currentSession exists
+    if (!currentSession || !currentSession.questions) {
+        showError('No active session found');
+        return;
+    }
+    
+    // Save current answer
+    const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+    if (selectedAnswer) {
+        sessionData.answers[currentQuestionIndex] = parseInt(selectedAnswer.value);
+        
+        // Check if answer is correct
+        const question = currentSession.questions[currentQuestionIndex];
+        if (parseInt(selectedAnswer.value) === question.correct) {
+            sessionData.correctAnswers++;
+        }
+    }
+    
+    // Move to next question or finish session
+    if (currentQuestionIndex < currentSession.questions.length - 1) {
+        displayQuestion(currentQuestionIndex + 1);
+    } else {
+        finishSession();
+    }
+}
+
+function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+        displayQuestion(currentQuestionIndex - 1);
+    }
+}
+
+function submitAnswer() {
+    nextQuestion();
+}
+
+function finishSession() {
+    // Check if currentSession exists and has questions
+    if (!currentSession || !currentSession.questions || currentSession.questions.length === 0) {
+        showError('No active session or questions found');
+        return;
+    }
+    
+    // Calculate final results
+    const accuracy = (sessionData.correctAnswers / currentSession.questions.length) * 100;
+    const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+
+    // Prepare answers array for backend
+    const answers = currentSession.questions.map((q, i) => ({
+        question_id: `q_${i + 1}`,
+        question: q.question,
+        options: q.options,
+        correct: q.correct,
+        selected: sessionData.answers[i] || 0,
+        selected_answer: q.options[sessionData.answers[i] || 0] || '',
+        correct_answer: q.options[q.correct] || '',
+        is_correct: sessionData.answers[i] === q.correct,
+        time_taken: sessionData.timeSpent ? sessionData.timeSpent[i] : 0
+    }));
+
+    // Stop timer
+    if (sessionTimer) {
+        clearInterval(sessionTimer);
+    }
+
+    // Submit session to backend
+    fetch('/api/submit_session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            student_id: currentSession.student_id,
+            subject: currentSession.subject,
+            difficulty: currentSession.difficulty,
+            answers: answers
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showSessionResults(data.accuracy * 100, data.total_time);
+        // Refresh analytics/dashboard if function exists
+        if (typeof loadAnalytics === 'function') loadAnalytics();
+        if (typeof loadDashboard === 'function') loadDashboard();
+        
+        // Reset session after showing results
+        currentSession = null;
+        currentQuestionIndex = 0;
+        sessionData = { answers: [], timeSpent: [], correctAnswers: 0 };
+
+        // Hide session interface
+        document.getElementById('activeSessionSection').style.display = 'none';
+        document.getElementById('questionInterface').style.display = 'none';
+        document.getElementById('sessionControls').style.display = 'block';
+    })
+    .catch(error => {
+        showError('Failed to submit session: ' + error.message);
+        
+        // Reset session even on error
+        currentSession = null;
+        currentQuestionIndex = 0;
+        sessionData = { answers: [], timeSpent: [], correctAnswers: 0 };
+
+        // Hide session interface
+        document.getElementById('activeSessionSection').style.display = 'none';
+        document.getElementById('questionInterface').style.display = 'none';
+        document.getElementById('sessionControls').style.display = 'block';
+    });
+}
+
+function endSession() {
+    if (confirm('Are you sure you want to end this session? Progress will be saved.')) {
+        finishSession();
+    }
+}
+
+function showSessionResults(accuracy, duration) {
+    // Check if currentSession exists
+    if (!currentSession || !currentSession.questions) {
+        showError('No active session found');
+        return;
+    }
+    
+    const modal = document.getElementById('sessionResultsModal');
+    const content = document.getElementById('sessionResultsContent');
+    
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Session Summary</h4>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-primary">${currentSession.questions.length}</div>
+                            <div class="stats-label">Questions</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-success">${accuracy.toFixed(1)}%</div>
+                            <div class="stats-label">Accuracy</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-info">${timeString}</div>
+                            <div class="stats-label">Duration</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-warning">${sessionData.correctAnswers}</div>
+                            <div class="stats-label">Correct</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4>Performance Analysis</h4>
+                <div class="chart-container" style="height: 200px;">
+                    <canvas id="sessionResultsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h5>Recommendations</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Learning Style:</strong> Consider more visual content for this student.
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-success">
+                        <i class="fas fa-chart-line me-2"></i>
+                        <strong>Progress:</strong> Student shows improvement in ${currentSession.subject}.
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    new bootstrap.Modal(modal).show();
+    
+    // Initialize results chart
+    setTimeout(() => {
+        const ctx = document.getElementById('sessionResultsChart');
+        if (ctx && currentSession && currentSession.questions) {
+            new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Correct', 'Incorrect'],
+                    datasets: [{
+                        data: [sessionData.correctAnswers, currentSession.questions.length - sessionData.correctAnswers],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    }, 100);
+}
+
+function startSessionTimer() {
+    sessionStartTime = Date.now();
+    sessionTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        document.getElementById('sessionTimer').textContent = timeString;
+        document.getElementById('timeSpent').textContent = `Time: ${timeString}`;
+    }, 1000);
+}
+
+function loadRecentSessions() {
+    // Load real session data from backend
+    fetch('/api/recent_sessions')
+        .then(response => response.json())
+        .then(data => {
+            const table = document.getElementById('recentSessionsTable');
+            let html = '';
+            
+            if (data.sessions && data.sessions.length > 0) {
+                data.sessions.forEach(session => {
+                    html += `
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="student-avatar me-2" style="width: 35px; height: 35px; font-size: 0.9rem;">
+                                        ${session.student_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">${session.student_name}</div>
+                                        <small class="text-muted">${session.subject}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${session.subject}</td>
+                            <td><span class="badge badge-success">${session.accuracy}%</span></td>
+                            <td>${session.duration}</td>
+                            <td>${new Date(session.date).toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewSessionDetails('${session.student_name}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html = '<tr><td colspan="6" class="text-center text-muted">No recent sessions found</td></tr>';
+            }
+            
+            table.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading recent sessions:', error);
+            const table = document.getElementById('recentSessionsTable');
+            table.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No recent sessions found</td></tr>';
+        });
+}
+
+function loadSessionStats() {
+    // Load real session statistics from backend
+    fetch('/api/session_stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalSessionsCount').textContent = data.total_sessions || '0';
+            document.getElementById('avgAccuracy').textContent = (data.avg_accuracy || 0) + '%';
+            document.getElementById('avgDuration').textContent = (data.avg_duration || 0) + ' min';
+            document.getElementById('activeStudents').textContent = data.active_students || '0';
+        })
+        .catch(error => {
+            console.error('Error loading session stats:', error);
+            document.getElementById('totalSessionsCount').textContent = '0';
+            document.getElementById('avgAccuracy').textContent = '0%';
+            document.getElementById('avgDuration').textContent = '0 min';
+            document.getElementById('activeStudents').textContent = '0';
+        });
+}
+
+function initializeSubjectChart() {
+    // Load real subject performance data from backend
+    fetch('/api/subject_performance')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('subjectPerformanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.subjects || ['Math', 'Science', 'English', 'History'],
+                    datasets: [{
+                        label: 'Average Accuracy',
+                        data: data.accuracies || [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading subject performance:', error);
+            // Fallback to empty chart
+            const ctx = document.getElementById('subjectPerformanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Math', 'Science', 'English', 'History'],
+                    datasets: [{
+                        label: 'Average Accuracy',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function createSession() {
+    const form = document.getElementById('newSessionForm');
+    const formData = new FormData(form);
+    
+    // Simulate session creation
+    showSuccess('Session created successfully');
+    bootstrap.Modal.getInstance(document.getElementById('newSessionModal')).hide();
+    
+    // Auto-fill session controls
+    document.getElementById('studentSelect').value = formData.get('studentId');
+    document.getElementById('subjectSelect').value = formData.get('subject');
+    document.getElementById('questionCountSelect').value = formData.get('questionCount');
+    document.getElementById('difficultySelect').value = formData.get('difficulty');
+    document.getElementById('sessionTypeSelect').value = formData.get('sessionType');
+}
+
+function viewSessionDetails(studentName) {
+    // Navigate to student analytics
+    window.location.href = `/analytics?student=${encodeURIComponent(studentName)}`;
+}
+
+function viewDetailedResults() {
+    // Navigate to detailed analytics
+    window.location.href = '/analytics';
+}
+
+function showSuccess(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show';
+    alert.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const mainContent = document.querySelector('.main-content .container-fluid');
+    mainContent.insertBefore(alert, mainContent.firstChild);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
+}
+
+function showError(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show';
+    alert.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const mainContent = document.querySelector('.main-content .container-fluid');
+    mainContent.insertBefore(alert, mainContent.firstChild);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
+}
+</script>
+{% endblock %} 

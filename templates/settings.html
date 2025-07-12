@@ -1,0 +1,849 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - NeuroLearn{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Page Header -->
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">Settings</h1>
+                <p class="text-muted mb-0">Configure system preferences and options</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="saveSettings()">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Navigation -->
+    <div class="col-xl-3 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Settings Categories
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="#general" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                        <i class="fas fa-sliders-h me-2"></i>General
+                    </a>
+                    <a href="#ai" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="fas fa-brain me-2"></i>AI Configuration
+                    </a>
+                    <a href="#notifications" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="fas fa-bell me-2"></i>Notifications
+                    </a>
+                    <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="fas fa-shield-alt me-2"></i>Security
+                    </a>
+                    <a href="#data" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="fas fa-database me-2"></i>Data Management
+                    </a>
+                    <a href="#advanced" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="fas fa-tools me-2"></i>Advanced
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="col-xl-9">
+        <div class="tab-content">
+            <!-- General Settings -->
+            <div class="tab-pane fade show active" id="general">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-sliders-h me-2"></i>General Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">System Name</label>
+                                <input type="text" class="form-control" id="systemName" value="NeuroLearn">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Language</label>
+                                <select class="form-select" id="language">
+                                    <option value="en" selected>English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Time Zone</label>
+                                <select class="form-select" id="timezone">
+                                    <option value="UTC" selected>UTC</option>
+                                    <option value="EST">Eastern Time</option>
+                                    <option value="PST">Pacific Time</option>
+                                    <option value="GMT">GMT</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date Format</label>
+                                <select class="form-select" id="dateFormat">
+                                    <option value="MM/DD/YYYY" selected>MM/DD/YYYY</option>
+                                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Theme</label>
+                                <select class="form-select" id="theme">
+                                    <option value="light" selected>Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="auto">Auto</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Auto-save Interval</label>
+                                <select class="form-select" id="autoSave">
+                                    <option value="30">30 seconds</option>
+                                    <option value="60" selected>1 minute</option>
+                                    <option value="300">5 minutes</option>
+                                    <option value="0">Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Configuration -->
+            <div class="tab-pane fade" id="ai">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-brain me-2"></i>AI Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">OpenVINO Model Path</label>
+                                <input type="text" class="form-control" id="openvinoPath" value="/models/intel/">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">AI Processing Device</label>
+                                <select class="form-select" id="aiDevice">
+                                    <option value="CPU" selected>CPU</option>
+                                    <option value="GPU">GPU</option>
+                                    <option value="MYRIAD">Intel Neural Compute Stick</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Adaptive Learning Sensitivity</label>
+                                <select class="form-select" id="adaptiveSensitivity">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Content Generation Mode</label>
+                                <select class="form-select" id="contentMode">
+                                    <option value="conservative" selected>Conservative</option>
+                                    <option value="balanced">Balanced</option>
+                                    <option value="creative">Creative</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Learning Style Detection</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="learningStyleDetection" checked>
+                                    <label class="form-check-label" for="learningStyleDetection">
+                                        Enable automatic learning style detection
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Real-time Analysis</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="realtimeAnalysis" checked>
+                                    <label class="form-check-label" for="realtimeAnalysis">
+                                        Enable real-time performance analysis
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="tab-pane fade" id="notifications">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bell me-2"></i>Notification Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email Notifications</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                    <label class="form-check-label" for="emailNotifications">
+                                        Receive email notifications
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Browser Notifications</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="browserNotifications" checked>
+                                    <label class="form-check-label" for="browserNotifications">
+                                        Show browser notifications
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Session Reminders</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sessionReminders" checked>
+                                    <label class="form-check-label" for="sessionReminders">
+                                        Remind students about scheduled sessions
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Progress Alerts</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="progressAlerts" checked>
+                                    <label class="form-check-label" for="progressAlerts">
+                                        Alert on significant progress changes
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Weekly Reports</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="weeklyReports" checked>
+                                    <label class="form-check-label" for="weeklyReports">
+                                        Send weekly progress reports
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">System Updates</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="systemUpdates" checked>
+                                    <label class="form-check-label" for="systemUpdates">
+                                        Notify about system updates
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div class="tab-pane fade" id="security">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>Security Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Session Timeout (minutes)</label>
+                                <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="480">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password Policy</label>
+                                <select class="form-select" id="passwordPolicy">
+                                    <option value="basic">Basic</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="strong">Strong</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Two-Factor Authentication</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                                    <label class="form-check-label" for="twoFactorAuth">
+                                        Enable 2FA for enhanced security
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data Encryption</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="dataEncryption" checked>
+                                    <label class="form-check-label" for="dataEncryption">
+                                        Encrypt sensitive data at rest
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Audit Logging</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="auditLogging" checked>
+                                    <label class="form-check-label" for="auditLogging">
+                                        Log all system activities
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">IP Whitelist</label>
+                                <input type="text" class="form-control" id="ipWhitelist" placeholder="192.168.1.0/24, 10.0.0.0/8">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Management -->
+            <div class="tab-pane fade" id="data">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-database me-2"></i>Data Management
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data Retention (days)</label>
+                                <input type="number" class="form-control" id="dataRetention" value="365" min="30" max="3650">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Backup Frequency</label>
+                                <select class="form-select" id="backupFrequency">
+                                    <option value="daily" selected>Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Auto Backup</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="autoBackup" checked>
+                                    <label class="form-check-label" for="autoBackup">
+                                        Automatically backup data
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data Export Format</label>
+                                <select class="form-select" id="exportFormat">
+                                    <option value="csv" selected>CSV</option>
+                                    <option value="json">JSON</option>
+                                    <option value="excel">Excel</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <button class="btn btn-outline-primary me-2" onclick="exportData()">
+                                    <i class="fas fa-download me-2"></i>Export All Data
+                                </button>
+                                <button class="btn btn-outline-warning me-2" onclick="backupNow()">
+                                    <i class="fas fa-save me-2"></i>Backup Now
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="clearData()">
+                                    <i class="fas fa-trash me-2"></i>Clear All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced -->
+            <div class="tab-pane fade" id="advanced">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tools me-2"></i>Advanced Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Debug Mode</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="debugMode">
+                                    <label class="form-check-label" for="debugMode">
+                                        Enable debug logging
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Performance Mode</label>
+                                <select class="form-select" id="performanceMode">
+                                    <option value="balanced" selected>Balanced</option>
+                                    <option value="performance">High Performance</option>
+                                    <option value="battery">Battery Saver</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">API Rate Limiting</label>
+                                <input type="number" class="form-control" id="rateLimit" value="100" min="10" max="1000">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Cache TTL (seconds)</label>
+                                <input type="number" class="form-control" id="cacheTTL" value="300" min="60" max="3600">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <button class="btn btn-outline-secondary me-2" onclick="resetSettings()">
+                                    <i class="fas fa-undo me-2"></i>Reset to Defaults
+                                </button>
+                                <button class="btn btn-outline-info" onclick="testConnection()">
+                                    <i class="fas fa-network-wired me-2"></i>Test Connection
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">OpenVINO Integration</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">OpenVINO Model Path</label>
+                                    <input type="text" class="form-control" id="openvinoPath" value="/models/intel/">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Device Selection</label>
+                                    <select class="form-select" id="openvinoDevice">
+                                        <option value="CPU">CPU</option>
+                                        <option value="GPU">GPU (if available)</option>
+                                        <option value="MYRIAD">Intel Neural Compute Stick</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-primary" onclick="testOpenVINO()">
+                                    <i class="fas fa-cog"></i> Test OpenVINO Connection
+                                </button>
+                                <button class="btn btn-success" onclick="runOpenVINODemo()">
+                                    <i class="fas fa-play"></i> Run OpenVINO Demo
+                                </button>
+                                <button class="btn btn-info" onclick="benchmarkOpenVINO()">
+                                    <i class="fas fa-tachometer-alt"></i> Benchmark Performance
+                                </button>
+                            </div>
+                            
+                            <div id="openvinoResults" class="mt-3" style="display: none;">
+                                <div class="alert alert-info">
+                                    <h6>OpenVINO Results:</h6>
+                                    <pre id="openvinoOutput"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadSettings();
+});
+
+function loadSettings() {
+    // Load settings from localStorage or API
+    const settings = getFromStorage('neurolearn_settings') || getDefaultSettings();
+    
+    // Apply settings to form elements
+    Object.keys(settings).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+            if (element.type === 'checkbox') {
+                element.checked = settings[key];
+            } else {
+                element.value = settings[key];
+            }
+        }
+    });
+}
+
+function getDefaultSettings() {
+    return {
+        systemName: 'NeuroLearn',
+        language: 'en',
+        timezone: 'UTC',
+        dateFormat: 'MM/DD/YYYY',
+        theme: 'light',
+        autoSave: '60',
+        openvinoPath: '/models/intel/',
+        aiDevice: 'CPU',
+        adaptiveSensitivity: 'medium',
+        contentMode: 'conservative',
+        learningStyleDetection: true,
+        realtimeAnalysis: true,
+        emailNotifications: true,
+        browserNotifications: true,
+        sessionReminders: true,
+        progressAlerts: true,
+        weeklyReports: true,
+        systemUpdates: true,
+        sessionTimeout: '30',
+        passwordPolicy: 'medium',
+        twoFactorAuth: false,
+        dataEncryption: true,
+        auditLogging: true,
+        ipWhitelist: '',
+        dataRetention: '365',
+        backupFrequency: 'daily',
+        autoBackup: true,
+        exportFormat: 'csv',
+        debugMode: false,
+        performanceMode: 'balanced',
+        rateLimit: '100',
+        cacheTTL: '300'
+    };
+}
+
+function saveSettings() {
+    const settings = {};
+    
+    // Collect all form values
+    const formElements = document.querySelectorAll('input, select');
+    formElements.forEach(element => {
+        if (element.id) {
+            if (element.type === 'checkbox') {
+                settings[element.id] = element.checked;
+            } else {
+                settings[element.id] = element.value;
+            }
+        }
+    });
+    
+    // Save to localStorage
+    saveToStorage('neurolearn_settings', settings);
+    
+    // Send to server
+    fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Settings saved successfully');
+        } else {
+            showError('Failed to save settings');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving settings:', error);
+        showError('Failed to save settings');
+    });
+}
+
+function exportData() {
+    showLoading();
+    
+    fetch('/api/export-data')
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `neurolearn_data_${new Date().toISOString().split('T')[0]}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            hideLoading();
+            showSuccess('Data exported successfully');
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error exporting data:', error);
+            showError('Failed to export data');
+        });
+}
+
+function backupNow() {
+    showLoading();
+    
+    fetch('/api/backup', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showSuccess('Backup completed successfully');
+        } else {
+            showError('Backup failed');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error creating backup:', error);
+        showError('Backup failed');
+    });
+}
+
+function clearData() {
+    if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+        showLoading();
+        
+        fetch('/api/clear-data', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showSuccess('All data cleared successfully');
+            } else {
+                showError('Failed to clear data');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error clearing data:', error);
+            showError('Failed to clear data');
+        });
+    }
+}
+
+// OpenVINO Functions
+function testOpenVINO() {
+    showLoading();
+    
+    fetch('/api/openvino/status')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('openvinoResults').style.display = 'block';
+                document.getElementById('openvinoOutput').textContent = 
+                    JSON.stringify(data.openvino_status, null, 2);
+                showSuccess('OpenVINO connection test successful');
+            } else {
+                showError('OpenVINO connection test failed');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error testing OpenVINO:', error);
+            showError('OpenVINO connection test failed');
+        });
+}
+
+function runOpenVINODemo() {
+    showLoading();
+    
+    fetch('/api/openvino/demo')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('openvinoResults').style.display = 'block';
+                document.getElementById('openvinoOutput').textContent = 
+                    JSON.stringify(data.demo_results, null, 2);
+                showSuccess('OpenVINO demo completed successfully');
+            } else {
+                showError('OpenVINO demo failed');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error running OpenVINO demo:', error);
+            showError('OpenVINO demo failed');
+        });
+}
+
+function benchmarkOpenVINO() {
+    showLoading();
+    
+    fetch('/api/openvino/benchmark')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('openvinoResults').style.display = 'block';
+                document.getElementById('openvinoOutput').textContent = 
+                    JSON.stringify(data.benchmark, null, 2);
+                showSuccess('OpenVINO benchmark completed');
+            } else {
+                showError('OpenVINO benchmark failed');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error benchmarking OpenVINO:', error);
+            showError('OpenVINO benchmark failed');
+        });
+}
+
+function analyzeLearningStyleOpenVINO() {
+    const interactionData = [0.8, 0.6, 0.4, 0.7, 0.5, 0.3, 0.9, 0.2, 0.6, 0.8];
+    
+    showLoading();
+    
+    fetch('/api/openvino/analyze_learning_style', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            interaction_data: interactionData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            document.getElementById('openvinoResults').style.display = 'block';
+            document.getElementById('openvinoOutput').textContent = 
+                JSON.stringify(data.analysis, null, 2);
+            showSuccess('Learning style analysis completed');
+        } else {
+            showError('Learning style analysis failed');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error analyzing learning style:', error);
+        showError('Learning style analysis failed');
+    });
+}
+
+function predictPerformanceOpenVINO() {
+    const historicalData = [0.6, 0.7, 0.8, 0.75, 0.85];
+    
+    showLoading();
+    
+    fetch('/api/openvino/predict_performance', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            historical_data: historicalData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            document.getElementById('openvinoResults').style.display = 'block';
+            document.getElementById('openvinoOutput').textContent = 
+                JSON.stringify(data.prediction, null, 2);
+            showSuccess('Performance prediction completed');
+        } else {
+            showError('Performance prediction failed');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error predicting performance:', error);
+        showError('Performance prediction failed');
+    });
+}
+
+function optimizeContentOpenVINO() {
+    showLoading();
+    
+    fetch('/api/openvino/optimize_content', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            learning_style: 'visual',
+            current_performance: 0.8,
+            session_time: 0.6,
+            engagement: 0.8
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            document.getElementById('openvinoResults').style.display = 'block';
+            document.getElementById('openvinoOutput').textContent = 
+                JSON.stringify(data.optimization, null, 2);
+            showSuccess('Content optimization completed');
+        } else {
+            showError('Content optimization failed');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error optimizing content:', error);
+        showError('Content optimization failed');
+    });
+}
+
+function resetSettings() {
+    if (confirm('Are you sure you want to reset all settings to defaults?')) {
+        const defaultSettings = getDefaultSettings();
+        saveToStorage('neurolearn_settings', defaultSettings);
+        loadSettings();
+        showSuccess('Settings reset to defaults');
+    }
+}
+
+function testConnection() {
+    showLoading();
+    
+    fetch('/api/test-connection')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showSuccess('Connection test successful');
+            } else {
+                showError('Connection test failed');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Connection test error:', error);
+            showError('Connection test failed');
+        });
+}
+</script>
+{% endblock %} 

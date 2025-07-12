@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - NeuroLearn{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Page Header -->
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">Dashboard</h1>
+                <p class="text-muted mb-0">AI-Powered Adaptive Learning Analytics</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stats-number" id="totalStudents">0</div>
+            <div class="stats-label">Total Students</div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="stats-number" id="totalSessions">0</div>
+            <div class="stats-label">Learning Sessions</div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stats-number" id="avgPerformance">0%</div>
+            <div class="stats-label">Avg Performance</div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card">
+            <div class="stats-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="stats-number" id="activeStudents">0</div>
+            <div class="stats-label">Active Students</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="col-xl-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>Performance Trends
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>Learning Styles
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="learningStylesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-xl-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Sessions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recentSessions">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Loading recent sessions...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performers -->
+    <div class="col-xl-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>Top Performers
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="topPerformers">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Loading top performers...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-primary w-100" onclick="startNewSession()">
+                            <i class="fas fa-plus me-2"></i>New Session
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-success w-100" onclick="addNewStudent()">
+                            <i class="fas fa-user-plus me-2"></i>Add Student
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-info w-100" onclick="generateReport()">
+                            <i class="fas fa-file-alt me-2"></i>Generate Report
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-warning w-100" onclick="viewAnalytics()">
+                            <i class="fas fa-chart-bar me-2"></i>View Analytics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dashboard functionality
+let performanceChart, learningStylesChart;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    initializeCharts();
+});
+
+function loadDashboardData() {
+    // Load dashboard stats
+    fetch('/api/dashboard')
+        .then(response => response.json())
+        .then(data => {
+            updateDashboardStats(data);
+            updateRecentSessions(data);
+            updateTopPerformers(data);
+        })
+        .catch(error => {
+            console.error('Error loading dashboard data:', error);
+            showError('Failed to load dashboard data');
+        });
+}
+
+function updateDashboardStats(data) {
+    const dashboard = data.dashboard;
+    
+    document.getElementById('totalStudents').textContent = dashboard.length;
+    document.getElementById('totalSessions').textContent = dashboard.reduce((sum, student) => sum + (student.total_sessions || 0), 0);
+    
+    const avgPerformance = dashboard.length > 0 
+        ? (dashboard.reduce((sum, student) => sum + (student.recent_accuracy || 0), 0) / dashboard.length * 100).toFixed(1)
+        : 0;
+    document.getElementById('avgPerformance').textContent = avgPerformance + '%';
+    
+    const activeStudents = dashboard.filter(student => (student.total_sessions || 0) > 0).length;
+    document.getElementById('activeStudents').textContent = activeStudents;
+}
+
+function updateRecentSessions(data) {
+    const container = document.getElementById('recentSessions');
+    
+    // Load real recent sessions from API
+    fetch('/api/recent_sessions')
+        .then(response => response.json())
+        .then(sessionData => {
+            if (sessionData.success && sessionData.sessions && sessionData.sessions.length > 0) {
+                let html = '';
+                sessionData.sessions.slice(0, 4).forEach(session => {
+                    const timeAgo = formatTimeAgo(session.date);
+                    html += `
+                        <div class="d-flex align-items-center mb-3 p-3 border rounded">
+                            <div class="flex-shrink-0">
+                                <div class="student-avatar">
+                                    ${session.student_name.charAt(0)}
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">${session.student_name}</h6>
+                                <p class="mb-1 text-muted">${session.subject} • ${session.accuracy}% accuracy</p>
+                                <small class="text-muted">${timeAgo}</small>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="badge badge-success">${session.accuracy}%</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div class="text-center py-4"><p class="text-muted">No recent sessions found</p></div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading recent sessions:', error);
+            container.innerHTML = '<div class="text-center py-4"><p class="text-muted">No recent sessions found</p></div>';
+        });
+}
+
+function formatTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+}
+
+function updateTopPerformers(data) {
+    const container = document.getElementById('topPerformers');
+    
+    // Sort students by performance
+    const topStudents = data.dashboard
+        .filter(student => (student.recent_accuracy || 0) > 0)
+        .sort((a, b) => (b.recent_accuracy || 0) - (a.recent_accuracy || 0))
+        .slice(0, 5);
+    
+    let html = '';
+    topStudents.forEach((student, index) => {
+        const accuracy = ((student.recent_accuracy || 0) * 100).toFixed(1);
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏅';
+        
+        // Get learning style from preferences
+        const learningStyle = student.learning_preferences && student.learning_preferences.length > 0 
+            ? student.learning_preferences[0] 
+            : 'visual';
+        
+        html += `
+            <div class="d-flex align-items-center mb-3 p-3 border rounded">
+                <div class="flex-shrink-0 me-3">
+                    <span style="font-size: 1.5rem;">${medal}</span>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${student.name || 'Unknown Student'}</h6>
+                    <p class="mb-1 text-muted">${learningStyle} learner</p>
+                    <small class="text-muted">${student.total_sessions || 0} sessions</small>
+                </div>
+                <div class="flex-shrink-0">
+                    <span class="badge badge-success">${accuracy}%</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function initializeCharts() {
+    // Destroy existing charts if they exist
+    if (performanceChart) {
+        performanceChart.destroy();
+    }
+    if (learningStylesChart) {
+        learningStylesChart.destroy();
+    }
+
+    // Performance Chart
+    const performanceCtx = document.getElementById('performanceChart');
+    if (performanceCtx) {
+        // Load real performance data
+        fetch('/api/performance_trends')
+            .then(response => response.json())
+            .then(data => {
+                const chartData = data.success ? data.data : { labels: [], data: [] };
+                
+                performanceChart = new Chart(performanceCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels || ['No data'],
+                        datasets: [{
+                            label: 'Average Performance',
+                            data: chartData.data || [0],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading performance data:', error);
+                // Fallback to empty chart
+                performanceChart = new Chart(performanceCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['No data'],
+                        datasets: [{
+                            label: 'Average Performance',
+                            data: [0],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+    }
+
+    // Learning Styles Chart
+    const learningStylesCtx = document.getElementById('learningStylesChart');
+    if (learningStylesCtx) {
+        // Load real learning styles data from dashboard data
+        fetch('/api/dashboard')
+            .then(response => response.json())
+            .then(data => {
+                const students = data.dashboard || [];
+                const learningStyles = {};
+                
+                students.forEach(student => {
+                    if (student.learning_preferences && student.learning_preferences.length > 0) {
+                        const style = student.learning_preferences[0];
+                        learningStyles[style] = (learningStyles[style] || 0) + 1;
+                    }
+                });
+                
+                const labels = Object.keys(learningStyles);
+                const values = Object.values(learningStyles);
+                
+                // If no data, show default
+                if (labels.length === 0) {
+                    labels.push('Visual', 'Auditory', 'Kinesthetic');
+                    values.push(0, 0, 0);
+                }
+                
+                learningStylesChart = new Chart(learningStylesCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: [
+                                '#6366f1',
+                                '#10b981',
+                                '#f59e0b'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading learning styles data:', error);
+                // Fallback to empty chart
+                learningStylesChart = new Chart(learningStylesCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Visual', 'Auditory', 'Kinesthetic'],
+                        datasets: [{
+                            data: [0, 0, 0],
+                            backgroundColor: [
+                                '#6366f1',
+                                '#10b981',
+                                '#f59e0b'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            });
+    }
+}
+
+function refreshDashboard() {
+    showLoading();
+    loadDashboardData();
+    setTimeout(hideLoading, 1000);
+}
+
+function startNewSession() {
+    window.location.href = '/sessions';
+}
+
+function addNewStudent() {
+    window.location.href = '/students';
+}
+
+function generateReport() {
+    window.location.href = '/analytics';
+}
+
+function viewAnalytics() {
+    window.location.href = '/analytics';
+}
+
+function showLoading() {
+    document.getElementById('loadingSpinner').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingSpinner').style.display = 'none';
+}
+
+function showError(message) {
+    // Create error alert
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show';
+    alert.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at top of main content
+    const mainContent = document.querySelector('.main-content .container-fluid');
+    mainContent.insertBefore(alert, mainContent.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
+}
+</script>
+{% endblock %} 
